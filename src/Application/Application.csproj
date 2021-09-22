@@ -5,6 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="DataAccess\Actors\Commands\" />
+    <Folder Include="DataAccess\Characters\Commands\" />
+    <Folder Include="DataAccess\Genres\Commands\" />
     <Folder Include="DataAccess\Movies\Commands\" />
   </ItemGroup>
 

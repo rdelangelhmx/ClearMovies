@@ -1,9 +1,12 @@
 ﻿using Application.Common.Interfaces;
+using Application.Common.Mappings;
 using Application.Common.UOW;
 using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,15 +36,47 @@ namespace Application.DataAccess.Movies.Queries
         {
             try
             {
-                // get data
-                var model = uow.EntityRepository<VwMovie>()
+                // get movies
+                var movies = uow.EntityRepository<Movie>()
                     .GetList(
-                        predicate: w => (string.IsNullOrEmpty(request.filterTitle) || w.Title.Contains(request.filterTitle)) &&
-                            (string.IsNullOrEmpty(request.filterGenre) || w.GenreName.Contains(request.filterGenre)) &&
-                            (string.IsNullOrEmpty(request.filterActor) || w.PersonName.Contains(request.filterActor)),
+                        predicate: w => (string.IsNullOrEmpty(request.filterTitle) || w.Title.Contains(request.filterTitle)),
                         index: request.page,
                         size: request.recordsPage);
-                return await Task.FromResult(model);
+                List<VwMovie> fullMovies = new List<VwMovie>();
+                foreach(Movie movie in movies.Items)
+                {
+                    var dMovie = MapperUtility.MapTo<Movie, VwMovie>(movie, new VwMovie());
+                    // Get Genres
+                    var genre = uow.EntityRepository<MovieGenre>()
+                        .GetAll(
+                        predicate: w => w.MovieId == movie.MovieId,
+                        include: i => i.Include(d => d.Genre)).ToList();
+                    var Genres = new List<string>();
+                    genre.ForEach(f => Genres.Add(new string(f.Genre.GenreName)));
+                    dMovie.GenreName = string.Join(", ", Genres.ToArray());
+                    // Get Actors
+                    var actor = uow.EntityRepository<MovieCast>()
+                        .GetAll(
+                        predicate: w => w.MovieId == movie.MovieId,
+                        include: i => i.Include(d => d.Person)).ToList();
+                    var Actors = new List<string>();
+                    actor.ForEach(f => Actors.Add(new string(f.Person.PersonName)));
+                    dMovie.PersonName = string.Join(", ", Actors.ToArray());
+                    // Get Characters
+                    var Characters = new List<string>();
+                    actor.ForEach(f => Characters.Add(new string(f.CharacterName)));
+                    dMovie.CharacterName = string.Join(", ", Characters.ToArray());
+                    // add movie to list
+                    fullMovies.Add(dMovie);
+                }
+                Paginate<VwMovie> result = new Paginate<VwMovie>();
+                result.Items = fullMovies;
+                result.Count = movies.Count;
+                result.From = movies.From;
+                result.Index = movies.Index;
+                result.Pages = movies.Pages;
+                result.Size = movies.Size;
+                return await Task.FromResult(result);
             }
             catch (NullReferenceException nex)
             {

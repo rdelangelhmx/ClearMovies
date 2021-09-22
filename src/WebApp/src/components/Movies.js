@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import MoviesService from '../services/Movies.service';
 
-export class Movies extends Movies {
+export class Movies extends Component {
   static displayName = Movies.name;
 
   constructor(props) {
@@ -13,13 +13,12 @@ export class Movies extends Movies {
     this.populateMoviesData = this.populateMoviesData.bind(this);
     this.refreshList = this.refreshList.bind(this);
 
-    this.searchTitle = this.searchTitle.bind(this);
-    this.searchGenre = this.searchGenre.bind(this);
-    this.searchActor = this.searchActor.bind(this);
-    
     this.state = { 
       movies: [], 
-      currentIndex: 1,
+      currentPage: 1,
+      size: 0,
+      pages: 0,
+      records: 0,
       searchTitle: "",      
       searchGenre: "",      
       searchActor: "",      
@@ -31,30 +30,28 @@ export class Movies extends Movies {
   }
 
   onChangeSearchTitle(e) {
-    const searchTitle = e.target.value;
-
     this.setState({
-      searchTitle: searchTitle
+      searchTitle: e.target.value
     });
   }  
 
   onChangeSearchGenre(e) {
-    const searchGenre = e.target.value;
-
     this.setState({
-      searchGenre: searchGenre
+      searchGenre: e.target.value
     });
   }
 
   onChangeSearchActor(e) {
-    const searchActor = e.target.value;
-
     this.setState({
-      searchActor: searchActor
+      searchActor: e.target.value
     });
   }
 
-  static renderMoviesTable(movies) {
+  static renderMoviesTable(data) {
+    let pagination = this.state.loading
+    ? <p><em>Loading...</em></p>
+    : Movies.pagination(this.state);
+
     return (
       <table className='table table-striped' aria-labelledby="tabelLabel">
         <thead>
@@ -66,7 +63,7 @@ export class Movies extends Movies {
           </tr>
         </thead>
         <tbody>
-          {movies.map(movie =>
+          {data.Movies.map(movie =>
             <tr key={movie.movie_id}>
               <td>{movie.title}</td>
               <td>{movie.homepage}</td>
@@ -75,15 +72,59 @@ export class Movies extends Movies {
             </tr>
           )}
         </tbody>
+        <tfoot>
+          <tr>
+            <td colSpan="4">
+              {pagination}
+            </td>
+          </tr>
+        </tfoot>
       </table>
     );
   }
 
+  static pagination(data)
+  {
+    let items = {};
+    for (let number = 1; number <= 5; number++) {
+      if(number == data.currentPage)
+      items.push(
+        <li class="page-item"><a class="page-link" href="#">number</a></li>
+      );
+      else 
+      items.push(
+        <li class="page-item"><a class="page-link" href="#">number</a></li>
+      );
+    }
+    
+    const paginationBasic = (
+      <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+          <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1">Previous</a>
+          </li>
+          {items}
+          <li class="page-item">
+            <a class="page-link" href="#">Next</a>
+          </li>
+        </ul>
+      </nav>
+    );
+
+    return(paginationBasic);
+  }
+
   async populateMoviesData() {
-    MoviesService.GetAll()
+    MoviesService.GetAll(this.state.searchTitle, this.state.searchGenre, this.state.searchActor, this.state.currentPage)
     .then(response => {
-      console.log(response);
-      this.setState({ movies: response.data, loading: false });
+      console.log(response.data.Items);
+      console.log(response.data.Count);
+      this.setState({ 
+        movies: response.data.Items, 
+        count: response.data.Count,
+        size: response.data.Size,
+        pages: response.data.Pages,
+        loading: false });
     })
     .catch(err => {
       console.log(err);
@@ -93,12 +134,12 @@ export class Movies extends Movies {
   refreshList() {
     this.populateMoviesData();
     this.setState({
-      currentIndex: 1
+      currentPage: 1
     });
   }
 
   searchMovies() {
-    MoviesService.getAll(this.filterTitle, this.filterGenre, this.filterActor, this.currentIndex)
+    MoviesService.getAll(this.filterTitle, this.filterGenre, this.filterActor, this.currentPage)
       .then(response => {
         this.setState({
           movies: response.data
@@ -113,43 +154,48 @@ export class Movies extends Movies {
   render() {
     let contents = this.state.loading
       ? <p><em>Loading...</em></p>
-      : Movies.renderMoviesTable(this.state.movies);
+      : Movies.renderMoviesTable(this.state);
 
     return (
       <div>
         <h1 id="tabelLabel" >Movies</h1>
         <div class="form-inline">
-          <div className="form-group">
+          <div className="form-group col-3">
             <input
               type="text"
               className="form-control"
               placeholder="Search by title"
-              value={searchTitle}
+              value={this.state.searchTitle}
               onBlur={this.onChangeSearchTitle} />
           </div>
-          <div className="form-group">
+          <div className="form-group col-3">
             <input
               type="text"
               className="form-control"
               placeholder="Search by genre"
-              value={searchGenre} 
+              value={this.state.searchGenre} 
               onBlur={this.onChangeSearchGenre} />
           </div>
-          <div className="form-group">
+          <div className="form-group col-3">
             <input
               type="text"
               className="form-control"
               placeholder="Search by actor"
-              value={searchActor}
+              value={this.state.searchActor}
               onBlur={this.onChangeSearchActor} />
           </div>
-          <button
-            className="btn btn-primary mb-2"
-            type="button"
-            onClick={this.searchTitle}>Search</button>
+          <div class="col-3">
+            <button
+              className="btn btn-primary mb-2"
+              type="button"
+              onClick={this.searchTitle}>Search</button>
+          </div>
         </div>
         <div className="list row">
           {contents}
+        </div>
+        <div className="row">
+          {Movies.pagination}
         </div>
     </div>
     );

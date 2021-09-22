@@ -19,7 +19,7 @@ namespace Application.Common.UOW
                 Index = index;
                 Size = size;
                 From = from;
-                Count = querable.Count();
+                Count = source.Count();
                 Pages = (int)Math.Ceiling(Count / (double)Size);
                 if (Pages > 1)
                     Items = querable.Skip((Index - 1) * Size).Take(Size).ToList();
@@ -72,7 +72,7 @@ namespace Application.Common.UOW
                 Index = index;
                 Size = size;
                 From = from;
-                Count = queryable.Count();
+                Count = source.Count();
                 Pages = (int)Math.Ceiling(Count / (double)Size);
 
                 if (Pages > 1)

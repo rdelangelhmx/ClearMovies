@@ -22,6 +22,6 @@ namespace Application.Common.Interfaces
         DbSet<Person> People { get; set; }
         DbSet<ProductionCompany> ProductionCompanies { get; set; }
         DbSet<ProductionCountry> ProductionCountries { get; set; }
-        DbSet<VwMovie> VwMovie { get; set; }
+        DbSet<VwMovie> VwMovies { get; set; }
     }
 }

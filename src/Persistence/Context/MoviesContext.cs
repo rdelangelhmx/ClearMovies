@@ -26,7 +26,7 @@ namespace Persistence.Context
         public virtual DbSet<Person> People { get; set; }
         public virtual DbSet<ProductionCompany> ProductionCompanies { get; set; }
         public virtual DbSet<ProductionCountry> ProductionCountries { get; set; }
-        public virtual DbSet<VwMovie> VwMovie { get; set; }
+        public virtual DbSet<VwMovie> VwMovies { get; set; }
         #endregion
 
         #region Creating Model
